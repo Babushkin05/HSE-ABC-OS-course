@@ -10,4 +10,6 @@
 
 ## 10 баллов
 
-[]()
+[ссылка на код задачи на 10 баллов](https://github.com/Babushkin05/HSE-ABC-OS-course/blob/main/seminar%204/sum_of_array_and_odd10.asm)
+
+в коде написано комментарии, по которым можно понять что делает тот или иной блок.
