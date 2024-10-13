@@ -1,0 +1,64 @@
+.include "IOmacroslib.asm"
+.eqv max_array_size_in_bytes 40
+
+.data 
+    .align 2
+    array_A: .space max_array_size_in_bytes
+    array_A_size: .word 0
+    array_B: .space max_array_size_in_bytes
+
+# fills array A
+.macro fill_array(%array_label, %array_size_label)
+    la t0 %array_label # adress of next value
+    li t1 0 # index of next value
+    lw t2 %array_size_label # array size
+    loop:
+    	print_str("Inpute element at index ")
+    	print_int_from_register(t1)
+    	print_str(": ")
+        read_int(t3)
+        sw t3 (t0)
+        addi t0 t0 4
+        addi t1 t1 1
+        blt t1 t2 loop
+.end_macro
+
+# prints array
+.macro show_array(%array_label, %array_size_label, %array_name)
+    la t0 %array_label
+    li t1 0
+    lw t2 %array_size_label
+    print_str("This is ")
+    print_str(%array_name)
+    print_str(" array : \n[ ")
+    loop:
+    	lw t3 (t0)
+    	print_int_from_register(t3)
+    	print_char(' ')
+    	addi t0 t0 4
+    	addi t1 t1 1
+    	blt t1 t2 loop
+    print_str("]\n")
+.end_macro 
+
+.macro get_array_min(%array_label, %array_size_label)
+	la t0 %array_label
+    li t1 0
+    lw t2 %array_size_label
+    .eqv max_int 2147483647
+    li t3 max_int
+    loop:
+    	lw t4(t0)
+    	set_first_to_min(t3, t4)
+    	addi t0 t0 4
+    	addi t1 t1 1
+    	blt t1 t2 loop
+    mv a0 t3 	
+.end_macro
+
+# set register1 to min(register1, register2)
+.macro set_first_to_min(%register1, %register2)
+	ble %register1 %register2 end_of_macros
+	mv %register1 %register2
+	end_of_macros:
+.end_macro
