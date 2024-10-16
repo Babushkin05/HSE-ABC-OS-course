@@ -7,11 +7,11 @@ main:
 		
 		beqz t0 to_test # if user wnat autotesting
 		
-		call input # if user test for himself
+		call input # if user test for himself. void func.
 		j finish
 		
 		to_test:
-			call tester
+			call tester # void func
 		
 		finish: 
 		exit # finishing program

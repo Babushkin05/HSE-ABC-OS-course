@@ -70,7 +70,7 @@
     	print_str("Input len of array A (from 1 to 10) :: ")
     	read_int(s0)
     	register_to_a0(s0)
-    	call check_len
+    	call check_len # check len from a0. return 0 in a0 if correct. else 1.
     	bnez a0 error
     	mv a0 s0
     

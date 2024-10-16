@@ -2,29 +2,30 @@
 
 
 .text	
+	# make testes.
 	tester:
 		addi sp sp -4 # prolog
         sw ra (sp)
         		
 		newline # test1
-		call store_test_data1
-		call main_part
+		call store_test_data1 # void func without params
+		call main_part # void func without params
 		
 		newline # test2
-		call store_test_data2
-		call main_part
+		call store_test_data2 # void func without params
+		call main_part # void func without params
 		
 		newline # test3
-		call store_test_data3
-		call main_part
+		call store_test_data3 # void func without params
+		call main_part # void func without params
 		
 		newline #test4
-		call store_test_data4
-		call main_part
+		call store_test_data4 # void func without params
+		call main_part # void func without params
 		
 		newline # test5
-		call store_test_data5
-		call main_part
+		call store_test_data5 # void func without params
+		call main_part # void func without params
 		
 		lw ra (sp) # epilog
         addi sp sp 4
