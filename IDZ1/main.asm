@@ -1,13 +1,17 @@
-.include "arraymacroslib"
-
+.include "tester.asm"
 .global main
 
-.text
-    main:
-        read_array_lenght # read array length from terminal
-        sw a0 array_A_size t0 # save length 
-        fill_array(array_A, array_A_size) # filling array A from terminal
-        show_array(array_A, array_A_size, "A") # prints array A in terminal
-        get_array_min(array_A, array_A_size) # get minimum from array A
-        print_int_from_register(a0)
-	exit
+main:
+		print_str("type 0 if you want run tests, or something else to fill array from terminal :: ")
+		read_int(t0) # choosing a program mode
+		
+		beqz t0 to_test # if user wnat autotesting
+		
+		call input # if user test for himself
+		j finish
+		
+		to_test:
+			call tester
+		
+		finish: 
+		exit # finishing program
