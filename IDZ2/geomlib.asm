@@ -80,6 +80,4 @@
 	fmv.d fa0 %x0
 	fmv.d fa1 %x1
 .end_macro
-	
-	
-	
+
