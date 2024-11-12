@@ -3,6 +3,7 @@
 
 
 .data
+	# points data
 	p1x: .double 0.0
 	p1y: .double 0.0
 	p2x: .double 0.0
@@ -26,6 +27,7 @@
 		fsd fs6 8(sp)
 		fsd fs7 (sp)
 	
+		# input
 		print_str("\ninput 4 points:\n")
 		input_double(fs0, "x0: ")
 		input_double(fs1, "y0: ")
@@ -178,6 +180,7 @@
 		fsd fs6 8(sp)
 		fsd fs7 (sp)
 		
+		# load data from memory
 		fld fs0 p1x t0
 		fld fs1 p1y t0
 		fld fs2 p2x t0
@@ -187,6 +190,7 @@
 		fld fs6 p4x t0
 		fld fs7 p4y t0
 		
+		# output
 		print_str("\nfor this data:")
 		print_double(fs0, "\nx0 = ")
 		print_double(fs1, ", y0 = ")
@@ -262,6 +266,7 @@
 		call distance
 		fmv.d fs2 fa0
 		
+		# is last point in this circle
 		fld fs3 p4x t0
 		fld fs4 p4y t0
 		two_points_to_a_registers(fs0, fs1, fs3, fs4)

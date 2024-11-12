@@ -1,5 +1,6 @@
 .include "program.asm"
 
+# macros for store test data
 .macro store_test(%x1, %y1, %x2, %y2, %x3, %y3, %x4, %y4)
 	.data 
 		x1_test: .double %x1
@@ -31,6 +32,7 @@
 .end_macro
 
 .text
+	# void function without parameters, that test program
 	tester:
 		# prolog
 		addi sp sp -4
