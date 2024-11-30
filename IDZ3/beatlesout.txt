@@ -1,0 +1,2 @@
+number of vowels: 0307
+number of consonants: 0498

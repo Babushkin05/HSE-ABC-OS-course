@@ -1,32 +1,7 @@
-.macro store_last_byte_from_word(%t, %addr)
-	# prolog
-	addi sp sp -12
-	sw s0 8(sp)
-	sw a0 4(sp)
-	sw a7 (sp)
-	
-	li a7 9
-	li a0 4
-	ecall
-	
-	sw %t (a0)
-	addi a0 a0 3
-	lb %t (a0)
-	sb %t (%addr)
-	
-	# epilog
-	lw s0 8(sp)
-	lw a0 4(sp)
-	lw a7 (sp)
-	addi sp sp 12
-.end_macro
-
 .text
 	# takes letter in a0, returns letter type: 1 - vowel, 2 - consonant, 0 - other
 	letter_type:
 		mv t5 a0
-		li a7, 11
-		ecall
 		.data
 			vowels: .asciz "eyuioaEYUIOA" 
 			.align 2 
@@ -68,7 +43,7 @@
 	counting_vowels_and_consonants:
 	
 		# prolog
-		addi sp sp 24
+		addi sp sp -24
 		sw s0 20(sp)
 		sw s1 16(sp)
 		sw s2 12(sp)
@@ -111,10 +86,13 @@
 		lw s3 8(sp)
 		lw s4 4(sp)
 		lw ra(sp)
+		addi sp sp 24
 	
 		ret
 	
-	# creates string by vowels and consonants count, vowels in a0, consonants in a1, returns string addres in a0, string length in a1
+	# creates string by vowels and consonants count, 
+	# takes vowels in a0, consonants in a1, 
+	# returns string addres in a0, string length in a1
 	create_string:
 	
 	# prolog
@@ -158,32 +136,36 @@
 	
 	add s6 s6 s4
 	
-	li t0 1000
+	# gets 1 digit
+	li t0 1000 
 	div t1 s0 t0
-	addi t1 t1 30 # 30 is '0' in ascii
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
-	li t0 1000
+	# gets 2 digit
+	li t0 1000 
 	rem s0 s0 t0
 	li t0 100
 	div t1 s0 t0
-	addi t1 t1 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
+	# gets 3 digit
 	li t0 100
 	rem s0 s0 t0
 	li t0 10 
 	div t1 s0 t0
-	addi t1 t1 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
+	# gets 4 digit
 	li t0 10
 	rem s0 s0 t0
-	addi t1 s0 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 s0 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
 	addi s6 s6 4
@@ -201,38 +183,45 @@
 	
 	add s6 s6 s4
 	
+	# gets 1 digit
 	li t0 1000
 	div t1 s1 t0
-	addi t1 t1 30 # 30 is '0' in ascii
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
+	# gets 2 digit
 	li t0 1000
 	rem s1 s1 t0
 	li t0 100
 	div t1 s1 t0
-	addi t1 t1 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
+	# gets 3 digit
 	li t0 100
 	rem s1 s1 t0
 	li t0 10 
 	div t1 s1 t0
-	addi t1 t1 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 t1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
+	# gets 4 digit
 	li t0 10
 	rem s1 s1 t0
-	addi t1 s1 30
-	store_last_byte_from_word(t1,s7)
+	addi t1 s1 48 # 48 is '0' in ascii
+	sb t1 (s7)
 	addi s7 s7 1
 	
 	addi s6 s6 4
 	
-	mv a0 s5
-	mv a1 s6
+	sb zero (s7)
+	addi s6 s6 1
+	
+	mv a0 s5 # string adress
+	mv a1 s6 # string size
 	
 	# epilog
 	lw s0 28(sp)

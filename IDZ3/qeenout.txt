@@ -1,0 +1,2 @@
+number of vowels: 0622
+number of consonants: 0782

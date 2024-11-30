@@ -1,17 +1,37 @@
-# Загрузка текста, превышающего буфер для его чтения
-# с размещением в динамической памяти
 .include "macro-syscalls.m"
 
-.eqv    NAME_SIZE 256	# Размер буфера для имени файла
-.eqv    TEXT_SIZE 512	# Размер буфера для текста
+.eqv    NAME_SIZE 256	# buffer size for filename
+.eqv    TEXT_SIZE 512	# buffer size for text part
+.eqv 	MAX_TEXT_SIZE 10240 # maximum length of text
 
-    .data
-er_name_mes:    .asciz "Incorrect file name\n"
-er_read_mes:    .asciz "Incorrect read operation\n"
+.data
+	er_name_mes: .asciz "Incorrect file name\n"
+	er_read_mes: .asciz "Incorrect read operation\n"
 
-file_name:      .space	NAME_SIZE		# Имячитаемого файла
-strbuf:	.space TEXT_SIZE			# Буфер для читаемого текста
-        .text
+	file_name: .space NAME_SIZE	# filename
+	strbuf:	.space TEXT_SIZE # buffer for text part
+
+.text
+	# void function witout parameters, fill filename from console
+    read_name_of_file:
+    	# prolog
+    	addi sp sp -4
+    	sw ra (sp)
+    	
+    	li a3 0
+    	input_name:
+    	print_str ("Input path to file for reading: ") 
+    	str_get(file_name, NAME_SIZE) # getting filename from terminal
+    	
+    	beqz a3 read_name_epilog 
+    	call read_string_from_file # if user input wrong name in last time
+    	
+    	# epilog
+    	read_name_epilog:
+    	lw ra (sp)
+    	addi sp sp 4
+    
+    # function without parameters, return addres of readed text in a0, and its size in a1 
     read_string_from_file:
     	# prolog
     	addi sp sp -32
@@ -24,58 +44,41 @@ strbuf:	.space TEXT_SIZE			# Буфер для читаемого текста
     	sw s6 4(sp)
     	sw ra (sp)
     	
-    	###############################################################
-    	print_str ("Input path to file for reading: ") # Вывод подсказки
-    	# Ввод имени файла с консоли эмулятора
-    	str_get(file_name, NAME_SIZE)
     	open(file_name, READ_ONLY)
-    	li		s1 -1			# Проверка на корректное открытие
-    	beq		a0 s1 er_name	# Ошибка открытия файла
-    	mv   	s0 a0       	# Сохранение дескриптора файла
-    	###############################################################
-    	# Выделение начального блока памяти для для буфера в куче
-    	allocate(TEXT_SIZE)		# Результат хранится в a0
-    	mv 		s3, a0			# Сохранение адреса кучи в регистре
-    	mv 		s5, a0			# Сохранение изменяемого адреса кучи в регистре
-    	li		s4, TEXT_SIZE	# Сохранение константы для обработки
-    	mv		s6, zero		# Установка начальной длины прочитанного текста
-    	###############################################################
+    	li		s1 -1			# is correct openning
+    	beq		a0 s1 er_name	# error name
+    	mv   	s0 a0       	# file descriptor
+   
+    	allocate(TEXT_SIZE)		# allocate buffer size
+    	mv 		s3, a0			# addres of begining
+    	mv 		s5, a0			# addres of last elem
+    	li		s4, TEXT_SIZE	
+    	mv		s6, zero		# readed text size
+    	
 		read_loop:
-    		# Чтение информации из открытого файла
-    		###read(s0, strbuf, TEXT_SIZE)
-    		read_addr_reg(s0, s5, TEXT_SIZE) # чтение для адреса блока из регистра
-    		# Проверка на корректное чтение
-    		beq		a0 s1 er_read	# Ошибка чтения
-    		mv   	s2 a0       	# Сохранение длины текста
-    		add 	s6, s6, s2		# Размер текста увеличивается на прочитанную порцию
-    		# При длине прочитанного текста меньшей, чем размер буфера,
-    		# необходимо завершить процесс.
-    		bne		s2 s4 end_loop
-    		# Иначе расширить буфер и повторить
-    		allocate(TEXT_SIZE)		# Результат здесь не нужен, но если нужно то...
-    		add		s5 s5 s2		# Адрес для чтения смещается на размер порции
-    		b read_loop				# Обработка следующей порции текста из файла
+    		read_addr_reg(s0, s5, TEXT_SIZE) # read addres of block
+    		beq		a0 s1 er_read	# error of reading
+    		mv   	s2 a0       	# save string length
+    		add 	s6, s6, s2		# new text size
+    		li t0 MAX_TEXT_SIZE
+    		bge s6 t0 end_loop # text size begger than 10kb 
+    		bne	s2 s4 end_loop # we read all text
+    		allocate(TEXT_SIZE)	# make buffer bigger
+    		add		s5 s5 s2		
+    		b read_loop				
 		end_loop:
-    	###############################################################
-    	# Закрытие файла
+
     	close(s0)
-    	#li   a7, 57       # Системный вызов закрытия файла
-    	#mv   a0, s0       # Дескриптор файла
-    	#ecall             # Закрытие файла
-    	###############################################################
-    	# Установка нуля в конце прочитанной строки
-    	###la	t0 strbuf	 # Адрес начала буфера
-    	mv	t0 s3		# Адрес буфера в куче
-    	add t0 t0 s6	# Адрес последнего прочитанного символа
-    	addi t0 t0 1	# Место для нуля
-    	sb	zero (t0)	# Запись нуля в конец текста
-    	###############################################################
-    # Вывод текста на консоль
-    ###la 	a0 strbuf
-    mv	a0	s3	# Адрес начала буфера из кучи
-    mv a1 s6
+
+    	mv	t0 s3		# addres of buffer in heap
+    	add t0 t0 s6	# addres of last char
+    	addi t0 t0 1	
+    	sb	zero (t0)	# make string null terminates
+
+    	mv a0 s3 # adress of begining string
+    	mv a1 s6 # string length
     
-    # epilog
+    	# epilog
     	lw s0 28(sp)
     	lw s1 24(sp)
     	lw s2 20(sp)
@@ -85,13 +88,12 @@ strbuf:	.space TEXT_SIZE			# Буфер для читаемого текста
     	lw s6 4(sp)
     	lw ra (sp)
     	addi sp sp 32
-    
-    ret
+    	ret
     
     # takes string adress in a0, string length in a1, prints string in file
     save_string_to_file:
     
-    # prolog
+    	# prolog
     	addi sp sp -32
     	sw s0 28(sp)
     	sw s1 24(sp)
@@ -102,25 +104,23 @@ strbuf:	.space TEXT_SIZE			# Буфер для читаемого текста
     	sw s6 4(sp)
     	sw ra (sp)
     	
-    mv s3 a0
-    mv s6 a1
+    	mv s3 a0 # string addres
+    	mv s6 a1 # string length
 
-    ###############################################################
-    # Сохранение прочитанного файла в другом файле
-    print_str ("Input path to file for writing: ")
-    str_get(file_name, NAME_SIZE) # Ввод имени файла с консоли эмулятора
-    open(file_name, WRITE_ONLY)
-    li		s1 -1			# Проверка на корректное открытие
-    beq		a0 s1 er_name	# Ошибка открытия файла
-    mv   	s0 a0       	# Сохранение дескриптора файла
-	# Запись информации в открытый файл
-    li   a7, 64       		# Системный вызов для записи в файл
-    mv   a0, s0 			# Дескриптор файла
-    mv   a1, s3  			# Адрес буфера записываемого текста
-    mv   a2, s6    			# Размер записываемой порции из регистра
-    ecall             		# Запись в файл
+    	print_str ("Input path to file for writing: ")
+    	str_get(file_name, NAME_SIZE) # getting filename
+    	open(file_name, WRITE_ONLY)
+    	li		s1 -1			
+    	beq		a0 s1 er_name	# is correct opening
+    	mv   	s0 a0       	# file descriptor
 
-   	# epilog
+    	li   a7, 64       		
+    	mv   a0, s0 			# file descriptor
+    	mv   a1, s3  			# string addres
+    	mv   a2, s6    			# string size
+    	ecall             		
+
+   		# epilog
     	lw s0 28(sp)
     	lw s1 24(sp)
     	lw s2 20(sp)
@@ -130,19 +130,64 @@ strbuf:	.space TEXT_SIZE			# Буфер для читаемого текста
     	lw s6 4(sp)
     	lw ra (sp)
     	addi sp sp 32
-   	ret
+   		ret
 
 # prints error of name
 er_name:
     # Сообщение об ошибочном имени файла
+    li a3 1
     la		a0 er_name_mes
     li		a7 4
-    ret
+    j input_name
 
 # prints error of read
 er_read:
     # Сообщение об ошибочном чтении
+    li a3 1
     la		a0 er_read_mes
     li		a7 4
-    ret
+    j input_name
+   
+   	# takes string adress in a0, string length in a1, prints string in file
+ 	output:
+ 	addi sp sp -12
+ 	sw s0 8(sp)
+ 	sw s1 4(sp)
+ 	sw ra (sp)
+ 	
+ 	mv s0 a0
+ 	mv s1 a1
+ 	.data
+ 		out_to_console: .asciz "\nDo you want to print output into console? (Y/N):: "
+ 	.text
+ 	
+ 	la a0 out_to_console
+ 	li a7 4
+ 	ecall 
+ 	
+ 	ynloop:
+ 	li a7 12
+ 	ecall
+ 	li t0 89 # 'Y'
+ 	beq t0 a0 console_out
+ 	li t0 78 # 'N'
+ 	beq t0 a0 file_out
+ 	j ynloop
 
+ 	console_out:
+ 	mv a0 s0
+ 	li a7 4
+ 	ecall
+ 	j epilog
+ 	
+ 	file_out:
+ 	mv a0 s0
+ 	mv a1 s1
+ 	call save_string_to_file
+ 	
+ 	epilog:
+	lw s0 8(sp)
+ 	lw s1 4(sp)
+ 	lw ra (sp)
+ 	addi sp sp 12
+ 	ret
