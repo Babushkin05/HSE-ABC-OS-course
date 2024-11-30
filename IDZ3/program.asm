@@ -1,4 +1,4 @@
-.include "load-text.s"
+.include "io_handler.asm"
 .include "string_handler.asm"
 
 

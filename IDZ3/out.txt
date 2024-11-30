@@ -1,2 +1,0 @@
-number of vowels: Ë136
-number of consonants: 0049
