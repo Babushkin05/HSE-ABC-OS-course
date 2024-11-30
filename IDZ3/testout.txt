@@ -1,1 +1,2 @@
-tesetettetetet
+number of vowels: 0006
+number of consonants: 0008
