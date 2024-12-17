@@ -7,14 +7,15 @@
 
 class Administration : public Thread {
 public:
-  Administration(int _duration, int &rooms, std::queue<Client *> &_waiters,
+  Administration(int visitors, int &rooms, std::queue<Client *> &_waiters,
                  pthread_mutex_t &mutex)
-      : work_duration{_duration}, rooms_number{rooms}, waiters{_waiters},
+      : visitors_count{visitors}, rooms_number{rooms}, waiters{_waiters},
         waiters_mutex(mutex) {}
   virtual void run() {
     pthread_mutex_t room_mutex;
     pthread_mutex_t cout_mutex;
-    for (int cur_time = 0; cur_time < work_duration; ++cur_time) {
+    int served = 0;
+    for (int cur_time = 0; served < visitors_count; ++cur_time) {
 
       pthread_mutex_lock(&cout_mutex);
       printf("Day %d:\n",cur_time);
@@ -42,7 +43,7 @@ public:
   }
 
 private:
-  int work_duration;
+  int visitors_count;
   int &rooms_number;
   std::queue<Client *> &waiters;
   pthread_mutex_t &waiters_mutex;

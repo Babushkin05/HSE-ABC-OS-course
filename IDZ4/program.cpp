@@ -7,6 +7,7 @@
 #include <string>
 #include "manual.cpp"
 #include "generate_clients.cpp"
+#include "read_file.cpp"
 
 #define BAD_FLAGS                                                              \
   std::cerr << "you print bad flags";                                          \
@@ -47,16 +48,16 @@ void parse_args(int argc, char **argv) {
       exit(0);
     }
   }
-  if(out.size()==0 != is_rundom){
+  if(source.size()==0 != is_rundom){
     BAD_FLAGS;
   }
   if(is_rundom){
     clients = generateClients(waiters, waiters_mutex);
   }
   else{
-    
+    clients = read_clients_from_file(source, waiters, waiters_mutex);
   }
-
+    
 }
 
 int main(int argc, char **argv) {
