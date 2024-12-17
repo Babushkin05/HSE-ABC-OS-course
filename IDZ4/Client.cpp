@@ -32,6 +32,7 @@ struct live_args {
   int during;
   int id;
   pthread_mutex_t &cout_mutex;
+  FILE *fptr;
 };
 
 class Client_live : public Thread {
@@ -41,6 +42,7 @@ public:
     pthread_mutex_lock(&args.cout_mutex);
     int id = args.id;
     printf("\tClient %d check-in into his room for %d days.\n",id,args.during);
+    fprintf(args.fptr,"\tClient %d check-in into his room for %d days.\n",id,args.during);
     pthread_mutex_unlock(&args.cout_mutex);
 
     sleep(args.during);
@@ -49,6 +51,7 @@ public:
     pthread_mutex_unlock(&args.mutex);
     pthread_mutex_lock(&args.cout_mutex);
     printf("\tClient %d leave his room.\n",id);
+    fprintf(args.fptr,"\tClient %d leave his room.\n",id);
     pthread_mutex_unlock(&args.cout_mutex);
   }
 

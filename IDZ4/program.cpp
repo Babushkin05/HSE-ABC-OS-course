@@ -8,6 +8,8 @@
 #include "manual.cpp"
 #include "generate_clients.cpp"
 #include "read_file.cpp"
+#include <fstream>
+#include <stdio.h>
 
 #define BAD_FLAGS                                                              \
   std::cerr << "ERROR :: you print bad flags";                                          \
@@ -19,10 +21,11 @@ std::queue<Client *> waiters;
 
 pthread_mutex_t waiters_mutex;
 
+FILE *fptr;
 
 ProgramParams parse_args(int argc, char **argv) {
     std::vector<Client> clients;
-  std::string out;
+  std::string out = "standart_out.txt";
   std::string source;
   bool is_rundom = false;
   for (size_t i = 0; i < argc; ++i) {
@@ -57,7 +60,13 @@ ProgramParams parse_args(int argc, char **argv) {
   else{
     clients = read_clients_from_file(source, waiters, waiters_mutex);
   }
-    return ProgramParams{clients, Administration{static_cast<int>(clients.size()),rooms_count, waiters, waiters_mutex}, out};
+   fptr = fopen(out.c_str(), "w");
+  if (fptr == NULL) 
+    { 
+        std::cerr<<"ERROR :: could not open file";
+        exit(0);
+    } 
+    return ProgramParams{clients, Administration{static_cast<int>(clients.size()),rooms_count, waiters, waiters_mutex, fptr},out};
 }
 
 int main(int argc, char **argv) {
@@ -72,4 +81,5 @@ int main(int argc, char **argv) {
     params.clients[i].wait();
   }
   params.adm.wait();
+  fclose(fptr);
 }
