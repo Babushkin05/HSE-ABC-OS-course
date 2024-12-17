@@ -6,7 +6,7 @@
 
 int rooms_count = 30;
 
-std::queue<Client> waiters;
+std::queue<Client*> waiters;
 
 pthread_mutex_t waiters_mutex;
 
@@ -28,7 +28,7 @@ int main(){
     Client c2(2,3,1,waiters,waiters_mutex);
     Client c3(3,0,3,waiters,waiters_mutex);
 
-    Administration adm(5,rooms_count, waiters, waiters_mutex);
+    Administration adm(10,rooms_count, waiters, waiters_mutex);
     c1.start();
     c2.start();
     c3.start();
