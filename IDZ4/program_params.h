@@ -4,9 +4,8 @@
 #include "Administration.cpp"
 #include <string>
 
-class ProgramParams{
-    public:
-    std::vector<Client> clients;
+struct ProgramParams{
+    std::vector<Client> clients; 
     Administration adm;
     std::string out;
 };

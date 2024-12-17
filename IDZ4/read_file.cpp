@@ -10,7 +10,7 @@ std::vector<Client> read_clients_from_file(std::string filename,
   std::vector<Client> clients;
   std::ifstream file(filename);
   if (!file.is_open()) {
-    std::cerr << "there is no file " << filename;
+    std::cerr << "ERROR :: there is no file " << filename;
     exit(1);
   }
   while (file.good()) {

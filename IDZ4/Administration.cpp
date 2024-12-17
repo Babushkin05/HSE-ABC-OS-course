@@ -7,18 +7,17 @@
 
 class Administration : public Thread {
 public:
-  Administration(int visitors, int &rooms, std::queue<Client *> &_waiters,
+  Administration( int &rooms, std::queue<Client *> &_waiters,
                  pthread_mutex_t &mutex)
-      : visitors_count{visitors}, rooms_number{rooms}, waiters{_waiters},
+      :  rooms_number{rooms}, waiters{_waiters},
         waiters_mutex(mutex) {}
   virtual void run() {
     pthread_mutex_t room_mutex;
     pthread_mutex_t cout_mutex;
-    int served = 0;
-    for (int cur_time = 0; served < visitors_count; ++cur_time) {
 
+    for (int cur_time = 0; cur_time < 15; ++cur_time) {
       pthread_mutex_lock(&cout_mutex);
-      printf("Day %d:\n",cur_time);
+      printf("Day %d:\n", cur_time);
       pthread_mutex_unlock(&cout_mutex);
       pthread_mutex_lock(&waiters_mutex);
       while (!waiters.empty() && rooms_number > 0) {
@@ -31,11 +30,11 @@ public:
         pthread_mutex_unlock(&waiters_mutex);
         live_args args{rooms_number,  room_mutex, cur_time,
                        client.during, client.id,  cout_mutex};
-        Client_live live{args};
+        Client_live *live = new Client_live{args};
         pthread_mutex_lock(&room_mutex);
-        --args.room_number;
+        --rooms_number;
         pthread_mutex_unlock(&room_mutex);
-        live.start();
+        live->start();
         pthread_mutex_lock(&waiters_mutex);
       }
       sleep(1);
@@ -43,7 +42,6 @@ public:
   }
 
 private:
-  int visitors_count;
   int &rooms_number;
   std::queue<Client *> &waiters;
   pthread_mutex_t &waiters_mutex;

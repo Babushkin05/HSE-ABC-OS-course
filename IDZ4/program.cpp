@@ -10,7 +10,7 @@
 #include "read_file.cpp"
 
 #define BAD_FLAGS                                                              \
-  std::cerr << "you print bad flags";                                          \
+  std::cerr << "ERROR :: you print bad flags";                                          \
   exit(1);
 
 int rooms_count = 30;
@@ -20,7 +20,7 @@ std::queue<Client *> waiters;
 pthread_mutex_t waiters_mutex;
 
 
-void parse_args(int argc, char **argv) {
+ProgramParams parse_args(int argc, char **argv) {
     std::vector<Client> clients;
   std::string out;
   std::string source;
@@ -57,23 +57,19 @@ void parse_args(int argc, char **argv) {
   else{
     clients = read_clients_from_file(source, waiters, waiters_mutex);
   }
-    
+    return ProgramParams{clients, Administration{rooms_count, waiters, waiters_mutex}, out};
 }
 
 int main(int argc, char **argv) {
 
-    parse_args(argc, argv);
-  Client c1(1, 2, 2, waiters, waiters_mutex);
-  Client c2(2, 3, 1, waiters, waiters_mutex);
-  Client c3(3, 0, 3, waiters, waiters_mutex);
+   ProgramParams params =  parse_args(argc, argv);
 
-  Administration adm(10, rooms_count, waiters, waiters_mutex);
-  c1.start();
-  c2.start();
-  c3.start();
-  adm.start();
-  c1.wait();
-  c2.wait();
-  c3.wait();
-  adm.wait();
+  for(size_t i = 0; i< params.clients.size();++i){
+    params.clients[i].start();
+  }
+  params.adm.start();
+  for(size_t i = 0; i< params.clients.size();++i){
+    params.clients[i].wait();
+  }
+  params.adm.wait();
 }
