@@ -19,7 +19,7 @@ std::vector<Client> generateClients(std::queue<Client *> &waiters,
   for(size_t i = 0; i< n;++i){
     int checkin = day_distr(generator);
     int duration = day_distr(generator);
-    //    std::cout<<i<<' '<<checkin<<' '<<duration<<'\n';
+        std::cout<<i<<' '<<checkin<<' '<<duration<<'\n';
     clients.emplace_back(i,checkin,duration,waiters, mutex);
   }
 

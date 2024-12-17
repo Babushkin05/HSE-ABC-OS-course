@@ -57,7 +57,7 @@ ProgramParams parse_args(int argc, char **argv) {
   else{
     clients = read_clients_from_file(source, waiters, waiters_mutex);
   }
-    return ProgramParams{clients, Administration{rooms_count, waiters, waiters_mutex}, out};
+    return ProgramParams{clients, Administration{static_cast<int>(clients.size()),rooms_count, waiters, waiters_mutex}, out};
 }
 
 int main(int argc, char **argv) {
