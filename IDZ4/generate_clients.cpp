@@ -15,7 +15,7 @@ std::vector<Client> generateClients(std::queue<Client *> &waiters,
   std::uniform_int_distribution<> day_distr(1, MAX_DAY_NUMBER);
 
   int n = client_number_distr(generator);
-  std::vector<Client> clients(n);
+  std::vector<Client> clients;
   for(size_t i = 0; i< n;++i){
     int checkin = day_distr(generator);
     int duration = day_distr(generator);
