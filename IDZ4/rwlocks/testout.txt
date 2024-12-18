@@ -1,0 +1,24 @@
+Day 0:
+	Client 1 check-in into his room for 3 days.
+Day 1:
+	Client 0 check-in into his room for 2 days.
+Day 2:
+	Client 2 check-in into his room for 2 days.
+	Client 1 leave his room.
+	Client 0 leave his room.
+Day 3:
+	Client 3 check-in into his room for 1 days.
+	Client 2 leave his room.
+Day 4:
+	Client 3 leave his room.
+Day 5:
+Day 6:
+Day 7:
+Day 8:
+Day 9:
+Day 10:
+Day 11:
+Day 12:
+Day 13:
+Day 14:
+Day 15:
