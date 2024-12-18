@@ -7,6 +7,7 @@
 const int MAX_CLIENT_NUMBER = 100;
 const int MAX_DAY_NUMBER = 7;
 
+// function for generation client
 std::vector<Client> generateClients(std::queue<Client *> &waiters,
                                     pthread_rwlock_t &mutex) {
   std::random_device random_dev;

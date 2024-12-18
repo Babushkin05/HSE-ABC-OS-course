@@ -4,6 +4,7 @@
 #include <queue>
 #include <unistd.h> // dont work at windows
 
+// client thread class
 class Client : public Thread {
 public:
   int id;
@@ -35,6 +36,7 @@ struct live_args {
   FILE *fptr;
 };
 
+// client living thread class
 class Client_live : public Thread {
 public:
   Client_live(live_args _args) : args{_args} {}
@@ -44,7 +46,6 @@ public:
     printf("\tClient %d check-in into his room for %d days.\n",id,args.during);
     fprintf(args.fptr,"\tClient %d check-in into his room for %d days.\n",id,args.during);
     pthread_rwlock_unlock(&args.cout_mutex);
-
     sleep(args.during);
     pthread_rwlock_wrlock(&args.mutex);
     ++args.room_number;

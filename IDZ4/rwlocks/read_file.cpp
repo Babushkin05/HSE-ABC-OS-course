@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+// function for reading files
 std::vector<Client> read_clients_from_file(std::string filename,
                                            std::queue<Client *> &waiters,
                                            pthread_rwlock_t &mutex) {
