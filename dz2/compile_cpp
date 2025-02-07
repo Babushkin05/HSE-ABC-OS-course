@@ -1,7 +1,8 @@
 #!/bin/bash
+
 if [ $# -le 1 ]; then
     echo "type ./compile_cpp <output_file> <source file> [source_file2...]"
-    exit
+    exit 1
 fi
 
 if [ -f $1 ]; then
@@ -10,6 +11,12 @@ if [ -f $1 ]; then
     if ! [ $iswantrewrite -eq "y" ]; then
 	exit
     fi
+fi
+
+first_number=$(g++ -dumpversion | awk -F. '{print $1}')
+if [ $first_number -le 7 ]; then
+    echo "g++ version is less than 8"
+    exit 1
 fi
 
 g++ -o $1 $2
