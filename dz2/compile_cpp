@@ -1,0 +1,15 @@
+#!/bin/bash
+if [ $# -le 1 ]; then
+    echo "type ./compile_cpp <output_file> <source file> [source_file2...]"
+    exit
+fi
+
+if [ -f $1 ]; then
+    echo "file" $1 "exists"
+    read -p "Do you want rewrite it? (y/n): " iswantrewrite
+    if ! [ $iswantrewrite -eq "y" ]; then
+	exit
+    fi
+fi
+
+g++ -o $1 $2
