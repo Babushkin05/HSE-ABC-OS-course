@@ -2,13 +2,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void out_process_info(pid_t son_pid){
+    printf("My pid = %d, my ppid = %d, mu son_pid = %d\n", getpid(), getppid(), son_pid);
+}
+
 int main(int argc, char **argv) {
+
+    // Create fork for printing enviroment
+    pid_t compute = fork();
+    if(compute != 0){
+        wait(NULL);
+        out_process_info(compute);
+        system("ls"); 
+        exit(0);
+    }
+
     int arg = atoi(argv[1]);
     if(arg < 0){
         printf("program argument must be positive\n");
         exit(1);
     }
     pid_t son_id = fork();
+    out_process_info(son_id);
     if(son_id == 0){
         uint64_t fact = 1;
         for( int i = 2; i <= arg; ++i){
@@ -45,7 +60,7 @@ int main(int argc, char **argv) {
                 }
             }
             printf("fibonacci: %llu\n", c);
+            exit(0);
         }
-        exit(0);
     }
 }
