@@ -8,7 +8,7 @@ fi
 if [ -f $1 ]; then
     echo "file" $1 "exists"
     read -p "Do you want rewrite it? (y/n): " iswantrewrite
-    if ! [ $iswantrewrite -eq "y" ]; then
+    if ! [ $iswantrewrite == "y" ]; then
 	exit
     fi
 fi
