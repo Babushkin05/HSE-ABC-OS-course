@@ -10,7 +10,7 @@
 
 ## [тесты](https://github.com/Babushkin05/HSE-ABC-OS-course/tree/main/idz%20os%201/tests)
 
-в каждой папке для удобства запуска тестов лежит bash-script:
+в каждой папке для удобства запуска тестов лежит bash-script "./run-tests":
 
 ```
 #!/bin/bash
