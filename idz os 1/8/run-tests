@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo "Running test 1..."
+./p1 ../tests/test1 1 chan1 chan2 &
+sleep 1
+./p2 chan1 chan2 &
+wait
+echo "Test 1 completed."
+
+echo "Running test 2..."
+./p1 ../tests/test2 2 chan1 chan2 &
+sleep 1
+./p2 chan1 chan2 &
+wait
+echo "Test 2 completed."
+
+echo "Running test 2..."
+./p1 ../tests/test3 3 chan1 chan2 &
+sleep 1
+./p2 chan1 chan2 &
+wait
+echo "Test 3 completed."
+
+echo "Running test 2..."
+./p1 ../tests/test4 4 chan1 chan2 &
+sleep 1
+./p2 chan1 chan2 &
+wait 
+echo "Test 4 completed."
+
+echo "Running test 2..."
+./p1 ../tests/test5 5 chan1 chan2 &
+sleep 1
+./p2 chan1 chan2 &
+wait 
+echo "Test 5 completed."
