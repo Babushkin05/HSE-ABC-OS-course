@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Создаем файлы для генерации ключей
+touch msgq1 msgq2
+
+# Функция для запуска теста
+run_test() {
+    local test_num=$1
+    local input_file="../tests/test$test_num"
+    local output_file="$test_num"
+
+    echo "Running test $test_num..."
+    
+    # Запускаем процессы
+    ./p1 "$input_file" "$output_file" msgq1 msgq2 &
+    sleep 1
+    ./p2 msgq1 msgq2 &
+    
+    # Ждем завершения обоих процессов
+    wait
+    
+    echo "Test $test_num completed."
+}
+
+# Запускаем тесты
+for i in {1..5}; do
+    run_test $i
+done
+
+# Удаляем файлы для генерации ключей
+rm msgq1 msgq2
