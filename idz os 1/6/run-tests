@@ -1,0 +1,7 @@
+#!/bin/bash
+
+./a.out ../tests/test1 1
+./a.out ../tests/test2 2
+./a.out ../tests/test3 3
+./a.out ../tests/test4 4
+./a.out ../tests/test5 5
