@@ -84,10 +84,18 @@ int main(int argc, char** argv) {
     char writebuf[128];
 
     while ((bytes_read = read(write_fd, writebuf, sizeof(writebuf))) > 0) {
+        int toend = 0;
         if (bytes_read == -1) {
             perror("read");
             close(write_fd);
             exit(1);
+        }
+
+        // there is '\0' in readed string
+        char* endline_pos = memchr(writebuf, '\0', bytes_read);
+        if (endline_pos != NULL) {
+            bytes_read = endline_pos - writebuf;
+            toend = 1; 
         }
 
         if (write(fd, writebuf, bytes_read) == -1) {
@@ -95,6 +103,8 @@ int main(int argc, char** argv) {
             close(fd);
             exit(1);
         }
+        if(toend)
+            break;
     }
 
     if (close(write_fd) < 0) {

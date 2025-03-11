@@ -108,7 +108,7 @@ char* make_string_from_array(int* arr, ssize_t size) {
             strcat(buffer, ", ");
         }
     }
-
+    strcat(buffer, "\0");
     return buffer;
 }
 
