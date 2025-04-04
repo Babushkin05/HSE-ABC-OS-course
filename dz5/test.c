@@ -11,9 +11,11 @@ char* path = "./test.txt";
 
 int main() {
     int fd[2];
-    pipe(fd);
+    pipe2(fd, O_CLOEXEC);
     pid_t son_id = fork();
     if(son_id == 0){
+        close(1);
+        dup2(fd[1],1);
         int ffd = open(path, 0, 0666);
         char buf[100];
         int readed = read(ffd, buf, 100);
