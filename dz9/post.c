@@ -7,10 +7,29 @@
 #include <stdatomic.h>
 #include <sched.h>
 #include <unistd.h>
+#include <signal.h>
+#include <string.h>
 
 #include "anon-sem.h"
 
+_Bool is_continue = 1;
+
+void handle_signal(int sig) {
+    (void)sig;
+    is_continue = 0;
+}
+
 int main() {
+
+    // handle ctrl + C
+    struct sigaction sa;
+    sa.sa_handler = handle_signal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+
     int shmfd = shm_open(SHMEM_NAME, O_RDWR, 0600);
     if (shmfd < 0) {
         perror("shm_open");
@@ -30,19 +49,36 @@ int main() {
         return 1;
     }
 
-    int val;
-    if (sem_getvalue(&buffer->sem, &val) == -1) {
-        perror("sem_getvalue");
-        return 1;
+    while(is_continue){
+        time_t now = time(NULL);
+        if (now == -1) {
+            perror("time");
+            break;
+        }
+
+        struct tm *local_time = localtime(&now);
+        if (local_time == NULL) {
+            perror("localtime");
+            break;
+        }
+
+        char time_str[100];
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S\n", local_time);
+        if (sem_post(&buffer->sem1) == -1) {
+            perror("sem_post");
+            break;
+        };
+        
+        strcpy(buffer->time_str, time_str);
+        //printf("%s\n", buffer->time_str);
+
+        if (sem_wait(&buffer->sem2) == -1) {
+            perror("sem_wait");
+            break;
+        };
+
+        sleep(1);
     }
-    printf("Semaphore value before post = %d\n", val);
-
-    if (sem_post(&buffer->sem) == -1) {
-        perror("sem_post");
-        return 1;
-    };
-
-    printf("sem_post: success\n");
 
     if (munmap(buffer, sizeof(shared_mem_t)) == -1) {
         perror("munmap");

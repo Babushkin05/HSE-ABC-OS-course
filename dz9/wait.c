@@ -5,10 +5,27 @@
 #include <sys/mman.h>
 #include <stdatomic.h>
 #include <unistd.h> 
+#include <signal.h>
 
 #include "anon-sem.h"
 
+_Bool is_continue = 1;
+
+void handle_signal(int sig) {
+    (void)sig;
+    is_continue = 0;
+}
+
 int main() {
+    // handle ctrl + C
+    struct sigaction sa;
+    sa.sa_handler = handle_signal;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT, &sa, NULL);
+    sigaction(SIGTERM, &sa, NULL);
+
+
     int shmfd = shm_open(SHMEM_NAME, O_RDWR | O_CREAT | O_EXCL, 0600);
     if (shmfd < 0) {
         perror("shm_open");
@@ -28,25 +45,29 @@ int main() {
         return 1;
     }
 
-    sem_init(&buffer->sem, 1 /*true*/, 0);
+    sem_init(&buffer->sem1, 1 /*true*/, 0);
+    sem_init(&buffer->sem2, 1 /*true*/, 0);
     atomic_store(&buffer->mem_ready, 1);
 
-    int val;
-    if (sem_getvalue(&buffer->sem, &val) == -1) {
-        perror("sem_getvalue");
-        return 1;
-    }
-    printf("Semaphore value before wait = %d\n", val);
+    while(is_continue) {
+        if (sem_wait(&buffer->sem1) == -1) {
+            perror("sem_wait");
+            break;
+        };
 
-    // Should block
-    if (sem_wait(&buffer->sem) == -1) {
-        perror("sem_wait");
+        printf("%s\n", buffer->time_str);
+
+        if (sem_post(&buffer->sem2) == -1) {
+            perror("sem_post");
+            break;
+        };
+    }
+
+    if (sem_destroy(&buffer->sem1) == -1) {
+        perror("sem_destroy");
         return 1;
     };
-
-    printf("sem_wait returned successfully\n");
-
-    if (sem_destroy(&buffer->sem) == -1) {
+    if (sem_destroy(&buffer->sem2) == -1) {
         perror("sem_destroy");
         return 1;
     };
