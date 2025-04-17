@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <semaphore.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 #include <time.h>  
 #include <stdatomic.h>
 #include <sched.h>
