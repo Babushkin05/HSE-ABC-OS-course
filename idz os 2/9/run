@@ -1,0 +1,13 @@
+#!/bin/bash
+gcc -o program main.c 
+./program -1 &
+
+
+echo "use 'killall program' to stop simulation"
+sleep 2
+kill program
+
+
+./program 0 &
+./program 1 &
+./program 2 & 
