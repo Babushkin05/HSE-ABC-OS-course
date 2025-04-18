@@ -14,17 +14,14 @@
 
 static _Atomic volatile sig_atomic_t unlink_done = 0;
 
-// Структура для сообщений
 typedef struct {
-  long mtype; // тип сообщения (идентификатор программиста)
-  int mtext;  // данные (номер задачи или -1 для новой программы)
+  long mtype;
+  int mtext;
 } task_message;
 
-// Идентификаторы семафоров и очередей сообщений
 int task_semids[NUM_PROGS];
 int msg_queues[NUM_PROGS];
 
-// Структура для semctl
 union semun {
   int val;
   struct semid_ds *buf;
@@ -36,7 +33,6 @@ void sigint_handler(int sig) {
     return;
   }
   if (!atomic_load(&unlink_done)) {
-    // Уничтожаем семафоры и очереди сообщений
     for (int i = 0; i < NUM_PROGS; i++) {
       semctl(task_semids[i], 0, IPC_RMID);
       msgctl(msg_queues[i], IPC_RMID, NULL);
@@ -48,7 +44,6 @@ void sigint_handler(int sig) {
   _exit(EXIT_SUCCESS);
 }
 
-// Операции с семафорами System V
 void sem_wait(int semid) {
   struct sembuf op = {0, -1, 0};
   semop(semid, &op, 1);
@@ -61,7 +56,7 @@ void sem_post(int semid) {
 
 void add_task(int msg_queue, size_t proger_num, int task) {
   task_message msg;
-  msg.mtype = proger_num + 1; // +1 чтобы избежать 0
+  msg.mtype = proger_num + 1; 
   msg.mtext = task;
   if (msgsnd(msg_queue, &msg, sizeof(msg.mtext), IPC_NOWAIT) == -1) {
     perror("msgsnd");

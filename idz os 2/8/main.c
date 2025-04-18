@@ -21,7 +21,6 @@ static _Atomic volatile sig_atomic_t unlink_done = 0;
 
 shared_mem_t *buffer;
 
-// Структура для semop
 union semun {
     int val;
     struct semid_ds *buf;
@@ -29,7 +28,6 @@ union semun {
     struct seminfo *__buf;
 };
 
-// Идентификаторы семафоров System V
 int mutex_semid;
 int task_semids[NUM_PROGS];
 
@@ -39,7 +37,6 @@ void sigint_handler(int sig) {
     }
 
     if (!atomic_load(&unlink_done)) {
-        // Уничтожаем семафоры System V
         semctl(mutex_semid, 0, IPC_RMID);
         for (int i = 0; i < NUM_PROGS; i++) {
             semctl(task_semids[i], 0, IPC_RMID);
@@ -52,7 +49,6 @@ void sigint_handler(int sig) {
     _exit(EXIT_SUCCESS); 
 }
 
-// Операции с семафорами System V
 void sem_wait(int semid) {
     struct sembuf op = {0, -1, 0};
     semop(semid, &op, 1);
