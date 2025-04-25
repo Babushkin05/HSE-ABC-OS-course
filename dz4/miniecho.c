@@ -85,7 +85,33 @@ func handleEmptyFile(repoPath, revision, file string) ([]BlameResult, error) {
 		}}, nil
 }
 
-Пенис
-Тромб 
-Шляпа
+#include "list.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+// Initialize an empty list
+void InitList(List *list) {
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+}
+
+// Clear the list and free all memory
+void ListClear(List *list) {
+    if (!list) return;
+    
+    Node *current = list->head;
+    while (current) {
+        Node *next = current->next;
+        free(current->val);  // Free the value
+        free(current);       // Free the node
+        current = next;
+    }
+    
+    list->head = NULL;
+    list->tail = NULL;
+    list->size = 0;
+}
+
+Кормен Т., Лейзерсон Ч., Ривест Р., Штайн К. Алгоритмы: построение и анализ = Introduction to Algorithms [Текст] / Т. Кормен [и др.]; пер. с англ. под ред. И. В. Красикова. – 3-е изд. – Москва: Вильямс, 2022. – 1328 с. – ISBN 978-5-8459-1794-2.
 
