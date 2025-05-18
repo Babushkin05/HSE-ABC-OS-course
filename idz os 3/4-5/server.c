@@ -6,24 +6,120 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <signal.h>
+#include <sys/select.h>
+#include <errno.h>
 
 #define MAX_VISITORS 25
 #define MAX_PAINTING_VISITORS 5
 #define DEFAULT_PORT 8080
 #define BUFFER_SIZE 1024
+#define MAX_PENDING_CONNECTIONS 100
+#define MAX_CLIENTS 300
+
+typedef struct {
+    int fd;
+    int visitor_id;
+    int current_painting;
+} client_t;
+
+client_t clients[MAX_CLIENTS];
+int current_visitors = 0;
+int painting_counts[5] = {0};
+
+void handle_client_message(int client_idx) {
+    char buffer[BUFFER_SIZE] = {0};
+    char response[BUFFER_SIZE] = {0};
+    int bytes_read;
+    
+    bytes_read = read(clients[client_idx].fd, buffer, BUFFER_SIZE - 1);
+    if (bytes_read <= 0) {
+        if (bytes_read == 0) {
+        } else {
+            perror("read error");
+        }
+        
+        // Освобождаем ресурсы
+        if (clients[client_idx].current_painting != -1) {
+            painting_counts[clients[client_idx].current_painting]--;
+        }
+        if (clients[client_idx].visitor_id != -1) {
+            current_visitors--;
+        }
+        
+        close(clients[client_idx].fd);
+        clients[client_idx].fd = -1;
+        return;
+    }
+    
+    buffer[bytes_read] = '\0';
+    printf("Получено от %d: %s\n", clients[client_idx].visitor_id, buffer);
+    
+    int visitor_id, painting_num;
+    char action[20];
+    
+    if (sscanf(buffer, "%d %s %d", &visitor_id, action, &painting_num) != 3) {
+        strcpy(response, "ERROR Invalid format");
+        send(clients[client_idx].fd, response, strlen(response), 0);
+        return;
+    }
+    
+    clients[client_idx].visitor_id = visitor_id;
+    
+    if (strcmp(action, "ENTER") == 0) {
+        if (current_visitors < MAX_VISITORS) {
+            current_visitors++;
+            snprintf(response, BUFFER_SIZE, "ENTER_OK %d", visitor_id);
+        } else {
+            snprintf(response, BUFFER_SIZE, "ENTER_WAIT %d", visitor_id);
+        }
+    } 
+    else if (strcmp(action, "VIEW") == 0) {
+        if (painting_num >= 0 && painting_num < 5) {
+            if (painting_counts[painting_num] < MAX_PAINTING_VISITORS) {
+                painting_counts[painting_num]++;
+                clients[client_idx].current_painting = painting_num;
+                snprintf(response, BUFFER_SIZE, "VIEW_OK %d %d", visitor_id, painting_num);
+            } else {
+                snprintf(response, BUFFER_SIZE, "VIEW_WAIT %d %d", visitor_id, painting_num);
+            }
+        } else {
+            snprintf(response, BUFFER_SIZE, "ERROR Invalid painting");
+        }
+    }
+    else if (strcmp(action, "LEAVE_PAINTING") == 0) {
+        if (clients[client_idx].current_painting != -1) {
+            painting_counts[clients[client_idx].current_painting]--;
+            clients[client_idx].current_painting = -1;
+            snprintf(response, BUFFER_SIZE, "LEFT_PAINTING %d", visitor_id);
+        } else {
+            snprintf(response, BUFFER_SIZE, "ERROR Not viewing");
+        }
+    }
+    else if (strcmp(action, "EXIT") == 0) {
+        current_visitors--;
+        snprintf(response, BUFFER_SIZE, "EXIT_OK %d", visitor_id);
+    } else {
+        snprintf(response, BUFFER_SIZE, "ERROR Unknown command");
+    }
+    
+    send(clients[client_idx].fd, response, strlen(response), 0);
+}
 
 int main(int argc, char const *argv[]) {
     int port = DEFAULT_PORT;
+    if (argc > 1) port = atoi(argv[1]);
     
-    if (argc > 1) {
-        port = atoi(argv[1]);
+    // Инициализация клиентов
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        clients[i].fd = -1;
+        clients[i].visitor_id = -1;
+        clients[i].current_painting = -1;
     }
     
-    int server_fd, new_socket;
+    int server_fd;
     struct sockaddr_in address;
     int opt = 1;
-    int addrlen = sizeof(address);
-    char buffer[BUFFER_SIZE] = {0};
     
     // Создание сокета
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
@@ -32,7 +128,7 @@ int main(int argc, char const *argv[]) {
     }
     
     // Настройка сокета
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
     }
@@ -41,77 +137,68 @@ int main(int argc, char const *argv[]) {
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
     
-    // Привязка сокета к порту
+    // Привязка сокета
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
     
-    // Ожидание подключений
-    #define MAX_PENDING_CONNECTIONS 100
+    // Прослушивание
     if (listen(server_fd, MAX_PENDING_CONNECTIONS) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
     
-    printf("Сервер (вахтер) запущен на порту %d и ожидает подключений...\n", port);
-    
-    int current_visitors = 0;
-    int painting_counts[MAX_PAINTING_VISITORS] = {0}; 
+    printf("Сервер запущен на порту %d\n", port);
     
     while (1) {
-        // Принятие нового подключения
-        if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
-            perror("accept");
-            exit(EXIT_FAILURE);
+        fd_set readfds;
+        int max_fd = server_fd;
+        FD_ZERO(&readfds);
+        FD_SET(server_fd, &readfds);
+        
+        // Добавляем клиентские сокеты
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (clients[i].fd > 0) {
+                FD_SET(clients[i].fd, &readfds);
+                if (clients[i].fd > max_fd) max_fd = clients[i].fd;
+            }
         }
         
-        // Чтение сообщения от клиента
-        read(new_socket, buffer, BUFFER_SIZE);
-        printf("Получено от клиента: %s\n", buffer);
+        // Ожидание активности
+        int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
+        if ((activity < 0) && (errno != EINTR)) {
+            perror("select error");
+        }
         
-        // Обработка сообщения
-        char response[BUFFER_SIZE] = {0};
-        int visitor_pid, painting_num;
-        char action[20];
-        
-        sscanf(buffer, "%d %s %d", &visitor_pid, action, &painting_num);
-        
-        if (strcmp(action, "ENTER") == 0) {
-            if (current_visitors < MAX_VISITORS) {
-                current_visitors++;
-                sprintf(response, "ENTER_OK %d", visitor_pid);
-            } else {
-                sprintf(response, "ENTER_WAIT %d", visitor_pid);
+        // Новое подключение
+        if (FD_ISSET(server_fd, &readfds)) {
+            struct sockaddr_in client_addr;
+            int addrlen = sizeof(client_addr);
+            int new_socket = accept(server_fd, (struct sockaddr *)&client_addr, (socklen_t*)&addrlen);
+            
+            if (new_socket < 0) {
+                perror("accept");
+                continue;
             }
-        } 
-        else if (strcmp(action, "VIEW") == 0) {
-            if (painting_num >= 0 && painting_num < 5) {
-                if (painting_counts[painting_num] < MAX_PAINTING_VISITORS) {
-                    painting_counts[painting_num]++;
-                    sprintf(response, "VIEW_OK %d %d", visitor_pid, painting_num);
-                } else {
-                    sprintf(response, "VIEW_WAIT %d %d", visitor_pid, painting_num);
+            
+            // Добавляем нового клиента
+            for (int i = 0; i < MAX_CLIENTS; i++) {
+                if (clients[i].fd == -1) {
+                    clients[i].fd = new_socket;
+                    break;
                 }
             }
         }
-        else if (strcmp(action, "LEAVE_PAINTING") == 0) {
-            if (painting_num >= 0 && painting_num < 5 && painting_counts[painting_num] > 0) {
-                painting_counts[painting_num]--;
-                sprintf(response, "LEFT_PAINTING %d %d", visitor_pid, painting_num);
+        
+        // Обработка клиентских сообщений
+        for (int i = 0; i < MAX_CLIENTS; i++) {
+            if (clients[i].fd > 0 && FD_ISSET(clients[i].fd, &readfds)) {
+                handle_client_message(i);
             }
         }
-        else if (strcmp(action, "EXIT") == 0) {
-            current_visitors--;
-            sprintf(response, "EXIT_OK %d", visitor_pid);
-        }
-        
-        // Отправка ответа клиенту
-        send(new_socket, response, strlen(response), 0);
-        
-        close(new_socket);
-        memset(buffer, 0, BUFFER_SIZE);
     }
     
+    close(server_fd);
     return 0;
 }

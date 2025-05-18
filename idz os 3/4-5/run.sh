@@ -1,9 +1,5 @@
 #!/bin/bash
 
-./server
-
-sleep 1
-
 SERVER_IP="127.0.0.1"
 SERVER_PORT="8080"
 NUM_VISITORS="100"
