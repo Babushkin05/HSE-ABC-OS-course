@@ -39,7 +39,7 @@ void handle_client_message(int client_idx) {
             perror("read error");
         }
         
-        // Освобождаем ресурсы
+        // Free resources
         if (clients[client_idx].current_painting != -1) {
             painting_counts[clients[client_idx].current_painting]--;
         }
@@ -53,7 +53,7 @@ void handle_client_message(int client_idx) {
     }
     
     buffer[bytes_read] = '\0';
-    printf("Получено от %d: %s\n", clients[client_idx].visitor_id, buffer);
+    printf("Received from %d: %s\n", clients[client_idx].visitor_id, buffer);
     
     int visitor_id, painting_num;
     char action[20];
@@ -110,7 +110,7 @@ int main(int argc, char const *argv[]) {
     int port = DEFAULT_PORT;
     if (argc > 1) port = atoi(argv[1]);
     
-    // Инициализация клиентов
+    // Initialize clients
     for (int i = 0; i < MAX_CLIENTS; i++) {
         clients[i].fd = -1;
         clients[i].visitor_id = -1;
@@ -121,13 +121,13 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in address;
     int opt = 1;
     
-    // Создание сокета
+    // Create socket
     if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
         perror("socket failed");
         exit(EXIT_FAILURE);
     }
     
-    // Настройка сокета
+    // Set socket options
     if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt))) {
         perror("setsockopt");
         exit(EXIT_FAILURE);
@@ -137,19 +137,19 @@ int main(int argc, char const *argv[]) {
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(port);
     
-    // Привязка сокета
+    // Bind socket
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
         perror("bind failed");
         exit(EXIT_FAILURE);
     }
     
-    // Прослушивание
+    // Listen
     if (listen(server_fd, MAX_PENDING_CONNECTIONS) < 0) {
         perror("listen");
         exit(EXIT_FAILURE);
     }
     
-    printf("Сервер запущен на порту %d\n", port);
+    printf("Server started on port %d\n", port);
     
     while (1) {
         fd_set readfds;
@@ -157,7 +157,7 @@ int main(int argc, char const *argv[]) {
         FD_ZERO(&readfds);
         FD_SET(server_fd, &readfds);
         
-        // Добавляем клиентские сокеты
+        // Add client sockets
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if (clients[i].fd > 0) {
                 FD_SET(clients[i].fd, &readfds);
@@ -165,13 +165,13 @@ int main(int argc, char const *argv[]) {
             }
         }
         
-        // Ожидание активности
+        // Wait for activity
         int activity = select(max_fd + 1, &readfds, NULL, NULL, NULL);
         if ((activity < 0) && (errno != EINTR)) {
             perror("select error");
         }
         
-        // Новое подключение
+        // New connection
         if (FD_ISSET(server_fd, &readfds)) {
             struct sockaddr_in client_addr;
             int addrlen = sizeof(client_addr);
@@ -182,7 +182,7 @@ int main(int argc, char const *argv[]) {
                 continue;
             }
             
-            // Добавляем нового клиента
+            // Add new client
             for (int i = 0; i < MAX_CLIENTS; i++) {
                 if (clients[i].fd == -1) {
                     clients[i].fd = new_socket;
@@ -191,7 +191,7 @@ int main(int argc, char const *argv[]) {
             }
         }
         
-        // Обработка клиентских сообщений
+        // Handle client messages
         for (int i = 0; i < MAX_CLIENTS; i++) {
             if (clients[i].fd > 0 && FD_ISSET(clients[i].fd, &readfds)) {
                 handle_client_message(i);
