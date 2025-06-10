@@ -246,11 +246,6 @@ Stopping loggers...
 **Пример вывода:**
 ```
 [admin@babushkin05server 10]$ make test
-gcc -Wall -Wextra -O2 -o server server.c
-server.c: In function ‘handle_sigint’:
-server.c:35:24: warning: unused parameter ‘sig’ [-Wunused-parameter]
-   35 | void handle_sigint(int sig) {
-      |                    ~~~~^~~
 Logger started on port 9000
 [LOG] Client 1/3: 127.0.0.1:37171 - Proposal 1
 [LOG] Client 2/3: 127.0.0.1:54980 - Proposal 2
